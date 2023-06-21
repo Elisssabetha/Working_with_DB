@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS vacancies
 (
 vacancy_id int PRIMARY KEY,
 vacancy_name varchar(100),
-employer_id int REFERENCES employers(employer_id),
+employer_id int REFERENCES employers(employer_id) ON DELETE CASCADE,
 salary_from int,
 salary_to int,
-city varchar(50),
+region varchar(100),
 url varchar(100)
 );
