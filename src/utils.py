@@ -4,6 +4,7 @@ import requests
 
 def get_employers_data() -> list:
     """Получаем с hh инфо по работодателям"""
+
     list_employers = []
     for i in range(30, 35):  # номера страниц выбраны рандомно
         params = {
@@ -46,19 +47,32 @@ def get_vacancies_data() -> list:
         vacancies_data = response.json()['items']
 
         for vacancy in vacancies_data:
+
+            if not vacancy['salary']['from']:
+                salary_from = 0
+            else:
+                salary_from = vacancy['salary']['from']
+
+            if not vacancy['salary']['to']:
+                salary_to = 0
+            else:
+                salary_to = vacancy['salary']['to']
+
             vac = {'vacancy_id': vacancy['id'],
                    'vacancy_name': vacancy['name'],
                    'employer_id': vacancy['employer']['id'],
-                   'salary_from': vacancy['salary']['from'],
-                   'salary_to': vacancy['salary']['to'],
-                   'region': vacancy['area']['name'],
-                   'url': vacancy['url']
+                   'salary_from': salary_from,
+                   'salary_to': salary_to,
+                   'city': vacancy['area']['name'],
+                   'url': vacancy['alternate_url']
                    }
             list_vacancies.append(vac)
     return list_vacancies
 
 
 def save_employers_to_db(list_employers: list, params: dict) -> None:
+    """Записываем инфо по работодателям в БД"""
+
     conn = psycopg2.connect(database='hh_info', **params)
     with conn:
         with conn.cursor() as cur:
@@ -73,6 +87,8 @@ def save_employers_to_db(list_employers: list, params: dict) -> None:
 
 
 def save_vacancies_to_db(list_vacancies: list, params: dict) -> None:
+    """Записываем инфо по вакансиям в БД"""
+
     conn = psycopg2.connect(database='hh_info', **params)
     with conn:
         with conn.cursor() as cur:
@@ -83,7 +99,40 @@ def save_vacancies_to_db(list_vacancies: list, params: dict) -> None:
                     vacancy['employer_id'],
                     vacancy['salary_from'],
                     vacancy['salary_to'],
-                    vacancy['region'],
+                    vacancy['city'],
                     vacancy['url']
                 ))
     conn.close()
+
+
+def employers_info(dbmanager):
+    """Выводит работодателей и количество вакансий"""
+
+    employers = dbmanager.get_companies_and_vacancies_count()
+    for item in employers:
+        print(item)
+
+
+def all_vacancies(dbmanager):
+    """Выводит все вакансии"""
+
+    vacancies = dbmanager.get_all_vacancies()
+    for item in vacancies:
+        print(item)
+
+
+def vacancies_with_higher_salary(dbmanager):
+    """Выводит все вакансии с зп выше средней"""
+
+    vacancies_with_higher_avg_salary = dbmanager.get_vacancies_with_higher_salary()
+    for item in vacancies_with_higher_avg_salary:
+        print(item)
+
+
+def search_vacancies_by_keyword(dbmanager):
+    """Выводит вакансии с ключевым словом"""
+
+    keyword = input('Введите ключевое слово для поиска вакансий\n')
+    filtered_vacancies = dbmanager.get_vacancies_with_keyword(keyword)
+    for item in filtered_vacancies:
+        print(item)

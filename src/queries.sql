@@ -20,6 +20,6 @@ vacancy_name varchar(100),
 employer_id int REFERENCES employers(employer_id) ON DELETE CASCADE,
 salary_from int,
 salary_to int,
-region varchar(100),
+city varchar(100),
 url varchar(100)
 );
